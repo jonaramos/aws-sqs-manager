@@ -1,2 +1,3 @@
-# aws-sqs-manager
-Manages the AWS SQS operations
+# `aws-sqs-manager`
+
+> Servicio que administra tareas en SQS de AWS.

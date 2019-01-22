@@ -1,0 +1,41 @@
+{
+  "name": "@pricetravel/aws-sqs-manager",
+  "version": "1.0.0",
+  "description": "> Servicio que administra tareas en SQS de AWS.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://jonathan.ramos@code.pricetravel.com.mx/scm/ms/aws-sqs-manager.git"
+  },
+  "keywords": [
+    "pricetravel",
+    "aws-sqs"
+  ],
+  "author": "Jonathan Ramos",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^10.12.18",
+    "prettier": "^1.15.3",
+    "tslint": "^5.12.1",
+    "tslint-config-prettier": "^1.17.0",
+    "typescript": "^3.2.2"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "dependencies": {
+    "aws-sdk": "^2.388.0"
+  }
+}
