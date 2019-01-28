@@ -1,4 +1,18 @@
 /**
+ * Flatten a multidimensional array. If empty array is found is not included.
+ * @param array Multidimensional array to be flatened.
+ * @returns One dimension flatten array.
+ */
+export function flatArray(array: any[]): any[] {
+  return array.reduce( (accumulator, current ) => {
+    if (!Array.isArray(current)) {
+      return [...accumulator, ...current];
+    }
+    return flatArray([...accumulator, ...current]);
+  }, []);
+}
+
+/**
  * Provides utils functions.
  */
 /**
@@ -8,7 +22,7 @@
  * @returns Paged array
  */
 export function splitInPages<T>(array: T[], pageSize: number): T[][] {
-  const totalPages = Math.round(array.length / pageSize);
+  const totalPages = Math.ceil(array.length / pageSize);
   // tslint:disable-next-line:prefer-const
   let pages = [];
   let itemsCounter = 0;
@@ -25,6 +39,5 @@ export function splitInPages<T>(array: T[], pageSize: number): T[][] {
     }
     pages.push(pagedItems);
   }
-
   return pages;
 }

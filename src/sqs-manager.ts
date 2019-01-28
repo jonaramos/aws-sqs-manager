@@ -1,34 +1,82 @@
-import * as sqsSdk from 'aws-sdk/clients/sqs';
+import * as AWS from 'aws-sdk';
+import { SendMessageBatchRequest, SendMessageBatchRequestEntryList, SendMessageRequest } from 'aws-sdk/clients/sqs';
 import { AWSError } from 'aws-sdk/lib/error';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { AttributesMap, MessageRequestAttribute, ReceiveDeleteMessageResponse, SendMessageRequest, SqsConfig } from './models';
+import { SqsConfig } from './models';
 import * as Utils from './utils';
+// import * as SqsSdk from 'aws-sdk/clients/sqs';
 
 const sqsBatchMaximum = 10;
 
 /** Message tasks enqueue service class. */
 export class SqsManager {
+  /**
+   * AWS SQS service instance.
+   */
+  private sqs: AWS.SQS;
+  /**
+   * Current AWS SQS service queue url.
+   */
   private queueUrl: string;
-  private sqs: sqsSdk;
 
    /**
-    * Create a Sqs Manager
-    * @param {SqsConfig} config Sqs configuration
+    * Create a Sqs Manager.
+    * @param {SqsConfig} config Sqs configuration.
     */
   constructor(private config: SqsConfig) {
     this.queueUrl = '';
-    this.sqs = new sqsSdk({ apiVersion: config.apiVersion, region: config.region });
+    this.sqs = new AWS.SQS({ apiVersion: config.apiVersion, region: config.region });
   }
 
   /**
-   * Set the service queue Url.
-   * @param queueName SQS queue name. If empty or null, the config value will be used.
+   * Delete a message from the current SQS queue.
+   * @param receiptHandle Message receipt id returned on message request.
+   * @returns Promise of deleteMessage aws result.
    */
-  public async setQueueUrl(queueName?: string) {
+  public async deleteMessage(receiptHandle: string) {
+    if(!receiptHandle) {
+      throw new TypeError('Empty receipt handle string are not allowed');
+    }
+    if (!this.queueUrl) {
+      await this.setQueueUrl();
+    }
+    const deleteRequest: AWS.SQS.DeleteMessageRequest = {
+      QueueUrl: this.queueUrl,
+      ReceiptHandle: receiptHandle
+    }
+    return await this.sqs.deleteMessage(deleteRequest).promise();
+  }
+
+  /**
+   * Send a request for multiple message deletion.
+   * @param entries A collection of delete message request entries.
+   * @returns Single message batch delete result or a collection of batch delete results.
+   */
+  public async deleteMessageBatch(entries: AWS.SQS.DeleteMessageBatchRequestEntry[]): Promise<PromiseResult<AWS.SQS.DeleteMessageBatchResult, AWSError>> {
+    if ( this.invalidBatchLenght(entries.length) ) {
+      throw new RangeError(`The entries argument length must be between 1 and ${sqsBatchMaximum}`);
+    }
+    if (!this.queueUrl) {
+      await this.setQueueUrl();
+    }
+
+    const deleteRequest: AWS.SQS.DeleteMessageBatchRequest = {
+      Entries: entries,
+      QueueUrl: this.queueUrl
+    };
+
+    return await this.sqs.deleteMessageBatch(deleteRequest).promise();
+  }
+
+  /**
+   * Set the service queue Url to use on all method calls.
+   * @param queueName SQS queue name. If empty or null, the config value will be used.
+   * @returns The SQS queue Url.
+   */
+  public async setQueueUrl(queueName?: string): Promise<string> {
     if (!queueName) {
       queueName = this.config.queueName
     }
-
     const queueUrlResponse = await this.sqs.getQueueUrl({ QueueName: queueName }).promise();
 
     if (queueUrlResponse === undefined || !queueUrlResponse.QueueUrl ) {
@@ -36,86 +84,18 @@ export class SqsManager {
     }
 
     this.queueUrl = queueUrlResponse.QueueUrl;
+    return this.queueUrl;
   }
 
   /**
-   * Send a collection of messages to the associated 
-   * @param {SendMessageRequest[]} messages Messages collection.
-   * @returns Sent messages result.
-   */
-  public async sendMessages(messages: SendMessageRequest[]): Promise<Array<PromiseResult<sqsSdk.SendMessageBatchResult, AWSError>>> {
-
-    if (!messages) {
-      throw new TypeError('Invalid Messages Request object');
-    }
-
-    if (!this.queueUrl) {
-      this.setQueueUrl();
-    }
-
-    // split messages in batches
-    let entries: sqsSdk.SendMessageBatchRequestEntryList;
-    const batches = Utils.splitInPages(messages, sqsBatchMaximum);
-    const sendMessageBatches: sqsSdk.SendMessageBatchRequest[] = [];
-
-    for (const batch of batches) {
-      entries = batch.map( msg => {
-
-        const sendMessageReq: sqsSdk.SendMessageBatchRequestEntry = {
-          Id: msg.id,
-          MessageBody: msg.body,
-        };
-
-        // generate attributes
-        if ( msg.attributes ) {
-
-          const attributes = msg.attributes.reduce( (previous, current) => {
-            const msgAttribute: MessageRequestAttribute = {
-              DataType: current.dataType
-            }
-    
-            if (current.stringValue) {
-              msgAttribute.StringValue = current.stringValue;
-            }
-    
-            if (current.binaryValue) {
-              msgAttribute.BinaryValue = current.binaryValue;
-            }
-
-            previous[current.name] = msgAttribute;
-            return previous;
-
-          }, {} as AttributesMap);
-
-          sendMessageReq.MessageAttributes = attributes;
-        }
-
-        return sendMessageReq;
-      })
-
-      // save batches
-      sendMessageBatches.push({
-        Entries: entries,
-        QueueUrl: this.queueUrl
-      });
-    }
-
-    // send messages batches
-    const tasks: Array<PromiseResult<sqsSdk.SendMessageBatchResult,AWSError>> = [];
-    for ( const msgBatch of sendMessageBatches ) {
-      const messageResponse = await this.sqs.sendMessageBatch(msgBatch).promise();
-      tasks.push(messageResponse);
-    }
-
-    return await Promise.all(tasks);
-  }
-
-  /**
-   * Send a request for a single or multiple messages.
+   * Send a receive request for a single or multiple messages.
    * @param receiveMessageRequest A valid AWS SQS message request.
-   * @returns Promise of message(s) result.
+   * @returns Sent message(s) result.
    */
-  public async receiveMessage(receiveMessageRequest: sqsSdk.ReceiveMessageRequest): Promise<PromiseResult<sqsSdk.ReceiveMessageResult,AWSError>> {
+  public async receiveMessage(receiveMessageRequest: AWS.SQS.ReceiveMessageRequest): Promise<PromiseResult<AWS.SQS.ReceiveMessageResult,AWSError>> {
+    if (!this.queueUrl) {
+      await this.setQueueUrl();
+    }
     const messagesMaximum = receiveMessageRequest.MaxNumberOfMessages || 1;
     if ( this.invalidBatchLenght(messagesMaximum) ) {
       throw new RangeError(`The maxNumber argument must be between 1 and ${sqsBatchMaximum}`);
@@ -125,18 +105,21 @@ export class SqsManager {
   }
 
   /**
-   * Send a request for to resolve (retreive and delete) a single or multiple messages.
+   * Send a request to resolve (retreive and delete) a single or multiple messages.
    * @param receiveMessageRequest A valid AWS SQS message request.
    * @returns Result of successful and failed resolved messages.
    */
-  public async receiveAndDeleteMessage(receiveMessageRequest: sqsSdk.ReceiveMessageRequest): Promise<ReceiveDeleteMessageResponse> {
+  public async resolveMessage(receiveMessageRequest: AWS.SQS.ReceiveMessageRequest): Promise<PromiseResult<AWS.SQS.DeleteMessageBatchResult, AWSError>> {
+    if (!this.queueUrl) {
+      await this.setQueueUrl();
+    }
     const response = await this.receiveMessage(receiveMessageRequest);
     
     if ( !response.Messages ) {
       throw new Error('Sqs messages response is null');
     }
 
-    const entries: sqsSdk.DeleteMessageBatchRequestEntryList = response.Messages.map( msg => {
+    const entries: AWS.SQS.DeleteMessageBatchRequestEntryList = response.Messages.map( msg => {
       if ( !msg.ReceiptHandle ) {
         throw new ReferenceError('SQS message has no ReceiptHandle property.');
       }
@@ -147,48 +130,70 @@ export class SqsManager {
       };
     } );
 
-    const deleteResponse = await this.deleteMessageBatch(entries);
-
-    return {
-      DeleteResult: {
-        Failed: deleteResponse.Failed,
-        Successful: deleteResponse.Successful
-      },
-      Messages: response.Messages
-    };
+    return await this.deleteMessageBatch(entries);
   }
 
   /**
-   * Send a request for multiple message deletion.
-   * @param entries A collection of delete message request entries.
-   * @returns Message batch delete result.
+   * Send a single message to be stored on the AWS SQS queue.
+   * @param sendMessageRequest A valid AWS SQS send message request. If QueueUrl property is pass as empty string, the method will use the curren service queue url.
+   * @returns Send message result.
    */
-  public async deleteMessageBatch(entries: sqsSdk.DeleteMessageBatchRequestEntry[]): Promise<PromiseResult<sqsSdk.DeleteMessageBatchResult, AWSError>> {
-    if ( this.invalidBatchLenght(entries.length) ) {
-      throw new RangeError(`The entries argument length must be between 1 and ${sqsBatchMaximum}`);
+  public async sendMessage(sendMessageRequest: SendMessageRequest) {
+    if(!sendMessageRequest.QueueUrl) {
+      this.setQueueUrl();
     }
-
-    const deleteRequest: sqsSdk.DeleteMessageBatchRequest = {
-      Entries: entries,
-      QueueUrl: this.queueUrl
-    };
-
-    return await this.sqs.deleteMessageBatch(deleteRequest).promise();
+    return await this.sqs.sendMessage(sendMessageRequest).promise();
   }
 
   /**
-   * Delete a message from the current SQS queue.
-   * @param receiptHandle Message receipt id returned on message request
+   * Send a single batch or multiple batches of messages to the associated queue.
+   * @param entries Collection of AWS send message batch request entries.
+   * @returns Message Batch results or Array of message batches results if the entries lenght is greater than the AWS SQS maximum batch size of 10.
    */
-  public async deleteMessage(receiptHandle: string) {
-    const deleteRequest: sqsSdk.DeleteMessageRequest = {
-      QueueUrl: this.queueUrl,
-      ReceiptHandle: receiptHandle
+  public async sendMessageBatches(entries: SendMessageBatchRequestEntryList): Promise<PromiseResult<AWS.SQS.SendMessageBatchResult, AWSError> | Array<PromiseResult<AWS.SQS.SendMessageBatchResult, AWSError>>> {
+    if (!entries) {
+      throw new TypeError('Entries empty argument is NOT allowed.');
     }
-    return await this.sqs.deleteMessage(deleteRequest).promise();
+
+    if (!this.queueUrl) {
+      await this.setQueueUrl();
+    }
+
+    // validate entries size to define return type
+    if (this.invalidBatchLenght(entries.length)) {
+      const sendMessageBatchRequest: SendMessageBatchRequest = {
+        Entries: entries,
+        QueueUrl: this.queueUrl
+      }
+      const test = await this.sqs.sendMessageBatch(sendMessageBatchRequest).promise();
+      return test;
+    }
+    
+    // split messages in batches
+    const batches = Utils.splitInPages(entries, sqsBatchMaximum);
+    const sendMessageBatchesRequests: SendMessageBatchRequest[] = batches.map( entry => {
+      return {
+        Entries: entry,
+        QueueUrl: this.queueUrl
+      }
+    });
+
+    // send messages batches
+    const tasks = [];
+    for ( const msgBatchReq of sendMessageBatchesRequests ) {
+      const messageResponse = await this.sqs.sendMessageBatch(msgBatchReq).promise();
+      tasks.push(messageResponse);
+    }
+
+    return await Promise.all(tasks);
   }
 
+  /**
+   * Validate if the lenght provided as argument is in the AWS allowed batch range.
+   * @param length Lenght number to validate.
+   * @returns True if lenght is inside the allowed range. False otherwise.
+   */
   private invalidBatchLenght(length: number): boolean {
-    return 1 > length && length > sqsBatchMaximum;
+    return length < 1 || sqsBatchMaximum < length;
   }
 }

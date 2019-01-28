@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --config jestconfig.json",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
@@ -20,14 +20,17 @@
     "url": "http://jonathan.ramos@code.pricetravel.com.mx/scm/ms/aws-sqs-manager.git"
   },
   "keywords": [
-    "pricetravel",
     "aws-sqs"
   ],
   "author": "Jonathan Ramos",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^23.3.13",
     "@types/node": "^10.12.18",
+    "aws-sdk-mock": "^4.3.0",
+    "jest": "^23.6.0",
     "prettier": "^1.15.3",
+    "ts-jest": "^23.10.5",
     "tslint": "^5.12.1",
     "tslint-config-prettier": "^1.17.0",
     "typescript": "^3.2.2"
