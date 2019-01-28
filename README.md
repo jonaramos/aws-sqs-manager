@@ -7,6 +7,7 @@
 ## Description
 
 This service provides asynchonous methods to manage the AWS SQS service. It uses the aws-sdk library and the TS type definitions. It can be used in NodeJS and Typescript projects.
+The service make us of some AWS interfaces. For full reference checkout the [AWS SQS Javascript documentation](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SQS.html).
 
 ## Installation
 
