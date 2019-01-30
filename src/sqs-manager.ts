@@ -3,9 +3,8 @@ import { SendMessageBatchRequest, SendMessageBatchRequestEntryList, SendMessageR
 import { AWSError } from 'aws-sdk/lib/error';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { SqsConfig } from './models';
-import * as Utils from './utils';
 import { ResolveMessageResult } from './models/resolve-message-result';
-// import * as SqsSdk from 'aws-sdk/clients/sqs';
+import * as Utils from './utils';
 
 const sqsBatchMaximum = 10;
 
