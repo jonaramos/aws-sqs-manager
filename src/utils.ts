@@ -4,7 +4,7 @@
  * @returns One dimension flatten array.
  */
 export function flatArray(array: any[]): any[] {
-  return array.reduce( (accumulator, current ) => {
+  return array.reduce((accumulator, current) => {
     if (!Array.isArray(current)) {
       return [...accumulator, ...current];
     }

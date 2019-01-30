@@ -3,26 +3,23 @@ import {
   GetQueueUrlResult,
   ReceiveMessageResult,
   SendMessageBatchResult,
-  SendMessageResult
+  SendMessageResult,
 } from 'aws-sdk/clients/sqs';
 
 export const deleteMessageBatchResult1: DeleteMessageBatchResult = {
   Failed: [],
-  Successful: [
-    { Id: 'deleted-msg-1' },
-    { Id: 'deleted-msg-2' }
-  ]
+  Successful: [{ Id: 'deleted-msg-1' }, { Id: 'deleted-msg-2' }],
 };
 
 export const getQueueUrlResult1: GetQueueUrlResult = {
-  QueueUrl: 'https://mocked.aws.queueurl'
+  QueueUrl: 'https://mocked.aws.queueurl',
 };
 
 export const receiveMessageResult1: ReceiveMessageResult = {
   Messages: [
     {
       Attributes: {
-        SentTimestamp: '2019-01-01'
+        SentTimestamp: '2019-01-01',
       },
       Body: 'Message body 1',
       MD5OfBody: '123123',
@@ -30,19 +27,19 @@ export const receiveMessageResult1: ReceiveMessageResult = {
       MessageAttributes: {
         NumberAttributeName: {
           DataType: 'Number',
-          StringValue: '2'
+          StringValue: '2',
         },
         StringAttributeName: {
           DataType: 'String',
-          StringValue: 'value-1'
-        }
+          StringValue: 'value-1',
+        },
       },
       MessageId: 'msg-1',
       ReceiptHandle: 'receipt-1',
     },
     {
       Attributes: {
-        SentTimestamp: '2019-01-01'
+        SentTimestamp: '2019-01-01',
       },
       Body: 'Message body 2',
       MD5OfBody: '123123',
@@ -50,16 +47,16 @@ export const receiveMessageResult1: ReceiveMessageResult = {
       MessageAttributes: {
         NumberAttributeName: {
           DataType: 'Number',
-          StringValue: '2'
+          StringValue: '2',
         },
         StringAttributeName: {
           DataType: 'String',
-          StringValue: 'value-1'
-        }
+          StringValue: 'value-1',
+        },
       },
       MessageId: 'msg-2',
       ReceiptHandle: 'receipt-1',
-    }
+    },
   ],
 };
 
@@ -77,14 +74,14 @@ export const sendMessageBatchResult1: SendMessageBatchResult = {
       MD5OfMessageAttributes: '1231231123',
       MD5OfMessageBody: '12312321312',
       MessageId: 'msg-1',
-      SequenceNumber: '128128128128'
+      SequenceNumber: '128128128128',
     },
     {
       Id: 'batch-msg-2',
       MD5OfMessageAttributes: '1231231123',
       MD5OfMessageBody: '12312321312',
       MessageId: 'msg-2',
-      SequenceNumber: '128128128128'
-    }
-  ]
+      SequenceNumber: '128128128128',
+    },
+  ],
 };
