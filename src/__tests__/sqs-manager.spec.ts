@@ -64,7 +64,7 @@ test('Should receive specified number of messages from SQS', async () => {
 test('Should resolve (receive and delete) messages from SQS', async () => {
   AWSMock.mock('SQS', 'deleteMessageBatch', callbackMocker.getFunction(sqsMockResults.deleteMessageBatchResult1));
   const deleteMessageBatchResult = await sqsManager.resolveMessage(sqsMockRequests.receiveMessageRequest1);
-  expect(deleteMessageBatchResult).toBe(sqsMockResults.deleteMessageBatchResult1);
+  expect(deleteMessageBatchResult).toEqual(managerMocks.resolveMessageResult1);
 });
 
 test('Should delete a message batch', async () => {

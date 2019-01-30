@@ -1,21 +1,32 @@
 # `aws-sqs-manager`
 
-> AWS SQS Manager Service.
+> AWS SQS JS/TS Manager Service.
 
 ## Table of Contents
 
+- [`aws-sqs-manager`](#aws-sqs-manager)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Install](#install)
+  - [Example](#example)
+    - [Configuration](#configuration)
+    - [Set Queue Url](#set-queue-url)
+    - [Call a service method](#call-a-service-method)
+  - [Methods Summary](#methods-summary)
+
 ## Description
 
-This service provides asynchonous methods to manage the AWS SQS service. It uses the aws-sdk library and the TS type definitions. It can be used in NodeJS and Typescript projects.
+This service provides asynchonous methods to manage the AWS SQS service. It uses the aws-sdk library and the TS type definitions. It has TS definitions.
+
 The service make us of some AWS interfaces. For full reference checkout the [AWS SQS Javascript documentation](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SQS.html).
 
-## Installation
+## Install
 
 ```console
 npm install -S aws-sqs-manager
 ```
 
-## How to use
+## Example
 
 ### Configuration
 
@@ -70,15 +81,14 @@ try{
 }
 ```
 
-## Methods
+## Methods Summary
 
-| Method             | Description                                                                                    | Request                                                                                                                               | Result                                                                                                                                |
-|--------------------|------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| deleteMessage      | Delete a message from the current queue.                                                       | The receipt handle of the message returned by receive message method.                                                                 | Default AWS request response.                                                                                                         |
-| delateMessageBatch | Send a request to delete a message batch.Batch message size up to 10 entries.                  | A list of AWS SQS delete message batch request entries.                                                                               | Single message batch delete result or a collection of batch delete results.                                                           |
-| setQueueUrl        | Set the default service queue Url to use on all method calls.                                  | SQS queue name. If empty or null, the config value will be used.                                                                      | The SQS queue Url.                                                                                                                    |
-| receiveMessage     | Send a receive request for a single or multiple messages. Batch message szie up to 10 entries. | A valid AWS SQS receive message request.                                                                                              | Sent message(s) result.                                                                                                               |
-| resolveMessage     | Send a request to resolve (retreive and delete) a single or multiple messages.                 | A valid AWS SQS receive message request.                                                                                              | Result of successful and failed resolved messages.                                                                                    |
-| sendMessage        | Send a single message to be stored on the AWS SQS queue.                                       | A valid AWS SQS send message request. If QueueUrl property is pass as empty string, the method will use the curren service queue url. | Send message result.                                                                                                                  |
-| sendMessageBatches | Send a single batch or multiple batches of messages to the associated queue.                   | Collection of AWS send message batch request entries.                                                                                 | Message Batch results or Array of message batches results if the entries lenght is greater than the AWS SQS maximum batch size of 10. |
-
+| Method | Description | Request | Result |
+|--|--|--|--|
+| deleteMessage | Delete a message from the current queue. | The receipt handle of the message returned by receive message method. | Default AWS request response. |
+| delateMessageBatch | Send a request to delete a message batch. Batch message size up to 10 entries. | A list of AWS SQS delete message batch request entries. | Single message batch delete result or a collection of batch delete results. |
+| receiveMessage | Send a receive request for a single or multiple messages. Batch message szie up to 10 entries. | A valid AWS SQS receive message request. | Sent message(s) result. |
+| resolveMessage | Send a request to resolve (retreive and delete) a single or multiple messages. | A valid AWS SQS receive message request. | Result of received and deleted messages. |
+| sendMessage | Send a single message to be stored on the AWS SQS queue. | A valid AWS SQS send message request. If QueueUrl property is pass as empty string, the method will use the curren service queue url. | Send message result. |
+| sendMessageBatches | Send a single batch or multiple batches of messages to the associated queue. | Collection of AWS send message batch request entries. | Message Batch results or Array of message batches results if the entries lenght is greater than the AWS SQS maximum batch size of 10. |
+| setQueueUrl | Set the default service queue Url to use on all method calls. | SQS queue name. If empty or null, the config value will be used. | The SQS queue Url. |

@@ -4,6 +4,7 @@ import { AWSError } from 'aws-sdk/lib/error';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { SqsConfig } from './models';
 import * as Utils from './utils';
+import { ResolveMessageResult } from './models/resolve-message-result';
 // import * as SqsSdk from 'aws-sdk/clients/sqs';
 
 const sqsBatchMaximum = 10;
@@ -88,7 +89,7 @@ export class SqsManager {
   }
 
   /**
-   * Send a receive request for a single or multiple messages.
+   * Send a receive request for a single or multiple messages (Up to 10).
    * @param receiveMessageRequest A valid AWS SQS message request.
    * @returns Sent message(s) result.
    */
@@ -105,21 +106,22 @@ export class SqsManager {
   }
 
   /**
-   * Send a request to resolve (retreive and delete) a single or multiple messages.
+   * Send a request to resolve (retreive and delete) a single or multiple messages (Up to 10).
    * @param receiveMessageRequest A valid AWS SQS message request.
    * @returns Result of successful and failed resolved messages.
    */
-  public async resolveMessage(receiveMessageRequest: AWS.SQS.ReceiveMessageRequest): Promise<PromiseResult<AWS.SQS.DeleteMessageBatchResult, AWSError>> {
+  public async resolveMessage(receiveMessageRequest: AWS.SQS.ReceiveMessageRequest): Promise<ResolveMessageResult> {
+    // Promise<PromiseResult<AWS.SQS.DeleteMessageBatchResult, AWSError>>
     if (!this.queueUrl) {
       await this.setQueueUrl();
     }
-    const response = await this.receiveMessage(receiveMessageRequest);
+    const receiveResult = await this.receiveMessage(receiveMessageRequest);
     
-    if ( !response.Messages ) {
-      throw new Error('Sqs messages response is null');
+    if ( !receiveResult.Messages ) {
+      throw new Error('Sqs messages receiveResult is null');
     }
 
-    const entries: AWS.SQS.DeleteMessageBatchRequestEntryList = response.Messages.map( msg => {
+    const entries: AWS.SQS.DeleteMessageBatchRequestEntryList = receiveResult.Messages.map( msg => {
       if ( !msg.ReceiptHandle ) {
         throw new ReferenceError('SQS message has no ReceiptHandle property.');
       }
@@ -130,7 +132,12 @@ export class SqsManager {
       };
     } );
 
-    return await this.deleteMessageBatch(entries);
+    const deleteResult = await this.deleteMessageBatch(entries);
+
+    return {
+      deleteMessageResult: deleteResult,
+      receiveMessageResult: receiveResult
+    };
   }
 
   /**
