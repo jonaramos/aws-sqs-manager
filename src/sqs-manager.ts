@@ -166,7 +166,7 @@ export class SqsManager {
    * @returns Message Batch results or Array of message batches results if the entries lenght is greater than the AWS SQS maximum batch size of 10.
    */
   public async sendMessageBatches(
-    entries: SendMessageBatchRequestEntryList
+    entries: SendMessageBatchRequestEntryList,
   ): Promise<
     | PromiseResult<AWS.SQS.SendMessageBatchResult, AWSError>
     | Array<PromiseResult<AWS.SQS.SendMessageBatchResult, AWSError>>
