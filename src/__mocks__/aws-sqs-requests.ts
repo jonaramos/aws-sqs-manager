@@ -27,7 +27,7 @@ export const receiveMessageRequest1: ReceiveMessageRequest = {
   AttributeNames: ['SentTimestamp'],
   MaxNumberOfMessages: 2,
   MessageAttributeNames: ['StringAttributeName', 'NumberAttributeName'],
-  QueueUrl: 'sqsQueueUrl',
+  QueueUrl: '',
 };
 
 export const sendMessageRequest1: SendMessageRequest = {
@@ -36,7 +36,7 @@ export const sendMessageRequest1: SendMessageRequest = {
     attribute2: messageAttributeValueNumber,
   },
   MessageBody: 'Message body',
-  QueueUrl: 'queueUrl',
+  QueueUrl: '',
 };
 
 export const sendMessageBatchRequestEntry1: SendMessageBatchRequestEntry = {
