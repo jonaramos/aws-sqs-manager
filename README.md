@@ -45,7 +45,7 @@ const sqsManager = new SqsManager(sqsConfig);
 
 ### Set Queue Url
 
-Every service method call validate the *queue url* global value and initialize it if needed using the *queueName* property set in the configuration object. If you need to manage a new queue you must initiate by calling the *setQueueUrl* method.
+Every service method call validate the __queue url__ global value and initialize it if needed using the __queueName__ property set in the configuration object, _so you must send an empty QueueUrl parameter on the requests that require it_ and it will be initialized using the previous resolved __queue url__ value. If you need to manage a new queue you must initiate by calling the __setQueueUrl__ method, it sets and return the QueueUrl, so you can use it value if needed on some requests.
 
 AWS recommends NOT to store sqs url values because they can change and request the queue url using the queue name.
 
@@ -70,7 +70,7 @@ const sendMessageRequest: SendMessageRequest = {
     }
   },
   MessageBody: 'Message body',
-  QueueUrl: 'queueUrl'
+  QueueUrl: ''
 };
 
 try{
@@ -80,7 +80,7 @@ try{
     // do something with error
 }
 ```
-
+In case you nee
 ## Methods Summary
 
 | Method | Description | Request | Result |

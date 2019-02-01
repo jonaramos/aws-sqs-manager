@@ -100,6 +100,8 @@ export class SqsManager {
     if (!this.queueUrl) {
       await this.setQueueUrl();
     }
+    receiveMessageRequest.QueueUrl = this.queueUrl;
+
     const messagesMaximum = receiveMessageRequest.MaxNumberOfMessages || 1;
     if (this.invalidBatchLenght(messagesMaximum)) {
       throw new RangeError(`The maxNumber argument must be between 1 and ${sqsBatchMaximum}`);
@@ -114,10 +116,11 @@ export class SqsManager {
    * @returns Result of successful and failed resolved messages.
    */
   public async resolveMessage(receiveMessageRequest: AWS.SQS.ReceiveMessageRequest): Promise<ResolveMessageResult> {
-    // Promise<PromiseResult<AWS.SQS.DeleteMessageBatchResult, AWSError>>
     if (!this.queueUrl) {
       await this.setQueueUrl();
     }
+    receiveMessageRequest.QueueUrl = this.queueUrl;
+
     const receiveResult = await this.receiveMessage(receiveMessageRequest);
 
     if (!receiveResult.Messages) {
@@ -148,10 +151,12 @@ export class SqsManager {
    * @param sendMessageRequest A valid AWS SQS send message request. If QueueUrl property is pass as empty string, the method will use the curren service queue url.
    * @returns Send message result.
    */
-  public async sendMessage(sendMessageRequest: SendMessageRequest) {
-    if (!sendMessageRequest.QueueUrl) {
-      this.setQueueUrl();
+  public async sendMessage(sendMessageRequest: AWS.SQS.SendMessageRequest) {
+    if (!this.queueUrl) {
+      await this.setQueueUrl();
     }
+    sendMessageRequest.QueueUrl = this.queueUrl;
+
     return await this.sqs.sendMessage(sendMessageRequest).promise();
   }
 
@@ -161,7 +166,7 @@ export class SqsManager {
    * @returns Message Batch results or Array of message batches results if the entries lenght is greater than the AWS SQS maximum batch size of 10.
    */
   public async sendMessageBatches(
-    entries: SendMessageBatchRequestEntryList,
+    entries: SendMessageBatchRequestEntryList
   ): Promise<
     | PromiseResult<AWS.SQS.SendMessageBatchResult, AWSError>
     | Array<PromiseResult<AWS.SQS.SendMessageBatchResult, AWSError>>
