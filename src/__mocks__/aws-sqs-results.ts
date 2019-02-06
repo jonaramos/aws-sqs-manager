@@ -11,6 +11,24 @@ export const deleteMessageBatchResult1: DeleteMessageBatchResult = {
   Successful: [{ Id: 'deleted-msg-1' }, { Id: 'deleted-msg-2' }],
 };
 
+export const deleteMessageBatchResult2: DeleteMessageBatchResult = {
+  Failed: [
+    {
+      Code: 'e1',
+      Id: 'failed-msg-1',
+      Message: 'Message error explanation',
+      SenderFault: true,
+    },
+    {
+      Code: 'e2',
+      Id: 'failed-msg-2',
+      Message: 'Message error explanation',
+      SenderFault: false,
+    }   
+  ],
+  Successful: []
+}
+
 export const getQueueUrlResult1: GetQueueUrlResult = {
   QueueUrl: 'https://mocked.aws.queueurl',
 };

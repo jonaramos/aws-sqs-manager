@@ -1,10 +1,20 @@
 import * as AWS from 'aws-sdk';
-import { SendMessageBatchRequest, SendMessageBatchRequestEntryList, SendMessageRequest } from 'aws-sdk/clients/sqs';
+import {
+  BatchResultErrorEntryList,
+  DeleteMessageBatchResultEntryList,
+  MessageList,
+  ReceiveMessageRequest,
+  SendMessageBatchRequest,
+  SendMessageBatchRequestEntryList
+  } from 'aws-sdk/clients/sqs';
 import { AWSError } from 'aws-sdk/lib/error';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { SqsConfig } from './models';
+import { DeleteMessageResult, SqsConfig } from './models';
+import { ResolveAllMessagesRequest } from './models/resolve-all-messages-request';
+import { ResolveAllMessagesResult } from './models/resolve-all-messages-result';
 import { ResolveMessageResult } from './models/resolve-message-result';
 import * as Utils from './utils';
+import { request } from 'https';
 
 const sqsBatchMaximum = 10;
 
@@ -44,6 +54,7 @@ export class SqsManager {
       QueueUrl: this.queueUrl,
       ReceiptHandle: receiptHandle,
     };
+   
     return await this.sqs.deleteMessage(deleteRequest).promise();
   }
 
@@ -144,6 +155,64 @@ export class SqsManager {
       deleteMessageResult: deleteResult,
       receiveMessageResult: receiveResult,
     };
+  }
+
+  /**
+   * Executes a longpolling to resolve required messages in the initialized queue within an specified seconds timeout.
+   * @param resolveAllMessagesRequest Contains values to resolve all messages.
+   * @returns Fetched messages, successful and failed messages deletes.
+   */
+  public async resolveRequiredMessages(resolveAllMessagesRequest: ResolveAllMessagesRequest): Promise<ResolveAllMessagesResult> {
+    const failedDeletes: BatchResultErrorEntryList = [];
+    const messages: MessageList = [];
+    const successfulDeletes: DeleteMessageBatchResultEntryList = [];
+
+    const receiveMessageRequest: ReceiveMessageRequest = {
+      AttributeNames: resolveAllMessagesRequest.attributesNames,
+      MaxNumberOfMessages: sqsBatchMaximum,
+      MessageAttributeNames: resolveAllMessagesRequest.messagesAttributesNames,
+      QueueUrl: '',
+      VisibilityTimeout: resolveAllMessagesRequest.visibilityTimeout,
+      WaitTimeSeconds: resolveAllMessagesRequest.waitTimeSeconds,
+    }
+
+    const timeout = 1000*resolveAllMessagesRequest.pollingTimeout;
+
+    const timerObj = setTimeout( async () => {
+      return {
+        failedDeletes,
+        messages,
+        successfulDeletes
+      } as ResolveAllMessagesResult
+    }, timeout);
+
+    while( successfulDeletes.length < resolveAllMessagesRequest.messagesTotal ) {
+      const resolveResults = await this.resolveMessage(receiveMessageRequest);
+      
+      if ( resolveResults ) {
+        const receivedMessages = resolveResults.receiveMessageResult.Messages;
+        if ( receivedMessages && receivedMessages.length > 0 ) {
+          receivedMessages.forEach( msg => messages.push(msg) );
+        }
+
+        const deletedMessages = resolveResults.deleteMessageResult;
+        if ( deletedMessages ) {
+          if ( deletedMessages.Successful && deletedMessages.Successful.length > 0 ) {
+            deletedMessages.Successful.forEach( deleted => successfulDeletes.push(deleted) );
+          }
+          if ( deletedMessages.Failed.length > 0 ) {
+            deletedMessages.Failed.forEach( failed => failedDeletes.push(failed) );
+          }
+        }
+      }
+    }
+
+    clearTimeout(timerObj);
+    return {
+      failedDeletes,
+      messages,
+      successfulDeletes
+    } as ResolveAllMessagesResult
   }
 
   /**
