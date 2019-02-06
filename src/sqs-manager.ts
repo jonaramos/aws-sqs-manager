@@ -158,7 +158,7 @@ export class SqsManager {
 
   /**
    * Executes a longpolling to resolve required messages in the initialized queue within an specified seconds timeout.
-   * @param resolveAllMessagesRequest Contains values to resolve all messages.
+   * @param resolveAllMessagesRequest Request to resolve all messages.
    * @returns Fetched messages, successful and failed messages deletes.
    */
   public async resolveRequiredMessages(
