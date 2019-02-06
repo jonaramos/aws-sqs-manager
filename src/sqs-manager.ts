@@ -14,7 +14,6 @@ import { ResolveAllMessagesRequest } from './models/resolve-all-messages-request
 import { ResolveAllMessagesResult } from './models/resolve-all-messages-result';
 import { ResolveMessageResult } from './models/resolve-message-result';
 import * as Utils from './utils';
-import { request } from 'https';
 
 const sqsBatchMaximum = 10;
 
