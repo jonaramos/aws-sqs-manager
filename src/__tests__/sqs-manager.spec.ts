@@ -83,7 +83,9 @@ test('Should delete a single message entry', async () => {
 
 test('Should successfully resolve all messages from SQS', async () => {
   // use mocked deleteMessageBatch from before
-  const resolveAllMessagesSuccessResult = await sqsManager.resolveRequiredMessages(managerMocks.resolveAllMessagesRequest1);
+  const resolveAllMessagesSuccessResult = await sqsManager.resolveRequiredMessages(
+    managerMocks.resolveAllMessagesRequest1,
+  );
   expect(resolveAllMessagesSuccessResult).toEqual(managerMocks.resolveAllMessagesResult1);
 
   // todo: try to implement failed message.

@@ -6,5 +6,5 @@ export interface ResolveAllMessagesResult {
   /** Received Messages */
   messages: MessageList;
   /** A list of successfully retrieved and deleted messages */
-  successfulDeletes: DeleteMessageBatchResultEntryList
+  successfulDeletes: DeleteMessageBatchResultEntryList;
 }
