@@ -187,7 +187,7 @@ export class SqsManager {
       } as ResolveAllMessagesResult;
     }, timeout);
 
-    while (successfulDeletes.length < resolveAllMessagesRequest.messagesTotal) {
+    while (messages.length < resolveAllMessagesRequest.messagesTotal) {
       const resolveResults = await this.resolveMessage(receiveMessageRequest);
 
       if (resolveResults) {
