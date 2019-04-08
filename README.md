@@ -33,12 +33,14 @@ npm install -S aws-sqs-manager
 Instantiate a new service using a valid *SqsConfig* configuration:
 
 ```javascript
+const SQS = require('aws-sqs-manager');
+
 const sqsConfig = {
   apiVersion: '2012-11-05',
   queueName: 'queueName',
   region: 'us-east-1'
 }
-const sqsManager = new SqsManager(sqsConfig);
+const sqsManager = new SQS.SqsManager(sqsConfig);
 ```
 
 Typescript:
